@@ -1,174 +1,111 @@
-function Stopwatch(display) {
-    this.startTime = null;
-    this.endTime = null;
-    this.running = false;
-    this.duration = 0;
-    this.display = display;
-}
-
-Stopwatch.prototype = {
-    start: function() {
-        console.log('Start button clicked');
-    },
-    stop: function() {
-        console.log('Stop button clicked');
-    },
-    reset: function() {
-        console.log('Reset button clicked');
-    }
-}
-Stopwatch.prototype.start = function() {
-    if (this.running) {
-        console.log('Stopwatch is already running');
-        return;
-    }
-    this.running = true;
-    this.startTime = new Date();
-    console.log('Start button clicked, stopwatch started');
-
-    // Start updating the duration every second
-    this.updateInterval = setInterval(() => this.update(), 1000);
-};
-class StopwatchElement extends HTMLElement {
+//Creates an html element for the stopwatch
+class Stopwatch extends HTMLElement {
+    
+ 
+      
     constructor() {
         super();
-        this._shadowRoot = this.attachShadow({ mode: 'open' });
-        this._display = document.createElement('span');
-        this._shadowRoot.appendChild(this._display);
-        this._stopwatch = new Stopwatch(this._display);
+
+        
+        this.attachShadow({mode: 'open'});
+        this.loadStyles('https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css');
+        this.shadowRoot.innerHTML = `
+            <style>
+                /* ... existing styles ... */
+                #reset {
+                    position: relative;
+                    overflow: hidden;
+                    padding: 0; /* Remove padding */
+                    line-height: 1; /* Adjust line-height */
+                }
+                .progress {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                }
+            </style>
+            <div style="padding: 20px; text-align: center">
+                <div class="container" style="margin: 20px auto; max-width: 300px; text-align: center">      
+                   <input type="text" class="form-control" placeholder="Name" style="margin-bottom: 20px; border: 2px solid #f8f9fa; background-color: #343a40; color: #f8f9fa; text-align: center;"> 
+                </div>  
+                <div class="stopwatch" style="font-family: Consolas, fantasy; font-size: 2em; margin-bottom: 20px;">
+                    00:00:00
+                </div>
+                <div class="controls">
+                    <button id="start-pause" class="btn btn-primary" style="margin-right: 10px;">Start</button>
+                    <button id="reset" class="btn btn-secondary">
+                        Reset
+                        <div class="progress" style="height: 20px; margin-top: 10px;">
+                            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+    `;
+        this.shadowRoot.querySelector('#start-pause').addEventListener('click', () => this.startPause());
+        this.time = 0;
+        this.timerDisplay = this.shadowRoot.querySelector('.stopwatch');
+        this.resetProgressBar = this.shadowRoot.querySelector('.progress-bar');
+        this.shadowRoot.querySelector('#reset').addEventListener('mousedown', () => this.startReset());
+        this.shadowRoot.querySelector('#reset').addEventListener('mouseup', () => this.stopReset());
+        
     }
 
-    connectedCallback() {
-        this._shadowRoot.innerHTML = `
-            <button id="start">Start</button>
-            <button id="stop">Stop</button>
-            <button id="reset">Reset</button>
-        `;
-        this._shadowRoot.querySelector('#start').addEventListener('click', () => this._stopwatch.start());
-        this._shadowRoot.querySelector('#stop').addEventListener('click', () => this._stopwatch.stop());
-        this._shadowRoot.querySelector('#reset').addEventListener('click', () => this._stopwatch.reset());
+    startPause() {
+        if (this.shadowRoot.querySelector('#start-pause').textContent === 'Start') {
+            this.shadowRoot.querySelector('#start-pause').textContent = 'Pause';
+            console.log('Start');
+            this.interval = setInterval(() => {
+                this.time++;
+                var hours = Math.floor(this.time / 3600);
+                var minutes = Math.floor((this.time % 3600) / 60);
+                var seconds = this.time % 60;
+                this.shadowRoot.querySelector('.stopwatch').textContent =
+                    `${hours < 10 ? '0' + hours : hours}:${minutes < 10 ? '0' + minutes : minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+
+            } , 1000);
+        } else {
+            this.shadowRoot.querySelector('#start-pause').textContent = 'Start';
+            console.log('Pause');
+            clearInterval(this.interval); // Clear the interval when the stopwatch is paused
+        }
+    }
+    resetStopwatch() {
+        this.time = 0;
+        this.timerDisplay.textContent = '00:00:00';
+        clearInterval(this.interval);
+        this.shadowRoot.querySelector('#start-pause').textContent = 'Start';
+        this.resetProgressBar.style.width = '0%';
     }
 
-    disconnectedCallback() {
-        this._shadowRoot.querySelector('#start').removeEventListener('click', () => this._stopwatch.start());
-        this._shadowRoot.querySelector('#stop').removeEventListener('click', () => this._stopwatch.stop());
-        this._shadowRoot.querySelector('#reset').removeEventListener('click', () => this._stopwatch.reset());
+    startReset() {
+        const resetDuration = 4000; // 4 seconds
+        const startTime = Date.now();
+    
+        this.resetTimeout = setTimeout(() => this.resetStopwatch(), resetDuration);
+        this.resetProgress = setInterval(() => {
+            const elapsedTime = Date.now() - startTime;
+            const percentage = Math.min(100, (elapsedTime / resetDuration) * 100);
+            this.resetProgressBar.style.width = percentage + '%';
+        }, 10);
+    }
+
+    stopReset() {
+        clearTimeout(this.resetTimeout);
+        clearInterval(this.resetProgress);
+        this.resetProgressBar.style.width = '0%';
+    } 
+
+
+    async loadStyles(url) {
+        const res = await fetch(url);
+        const text = await res.text();
+        const style = document.createElement('style');
+        style.textContent = text;
+        this.shadowRoot.appendChild(style);
     }
 }
 
-customElements.define('stopwatch-element', StopwatchElement);
 
-Stopwatch.prototype.update = function() {
-    if (!this.running) return;
-    const now = new Date();
-    const seconds = (now.getTime() - this.startTime.getTime()) / 1000;
-    this.duration += seconds;
-    this.startTime = now;
-
-    // Update the display
-    this.display.textContent = this.formatTime(this.duration);
-};
-Stopwatch.prototype.formatTime = function(timeInSeconds) {
-    let hours = Math.floor(timeInSeconds / 3600);
-    let minutes = Math.floor((timeInSeconds - (hours * 3600)) / 60);
-    let seconds = Math.floor(timeInSeconds - (hours * 3600) - (minutes * 60));
-
-    if (hours < 10) {hours = "0"+hours;}
-    if (minutes < 10) {minutes = "0"+minutes;}
-    if (seconds < 10) {seconds = "0"+seconds;}
-    return hours+':'+minutes+':'+seconds;
-};
-Stopwatch.prototype.stop = function() {
-    if (!this.running) {
-        console.log('Stopwatch is not started');
-        return;
-    }
-    this.running = false;
-    clearInterval(this.updateInterval);
-    console.log('Stop button clicked, stopwatch stopped');
-
-
-};
-
-Stopwatch.prototype.reset = function() {
-    this.startTime = null;
-    this.running = false;
-    this.duration = 0;
-    clearInterval(this.updateInterval);
-    console.log('Reset button clicked, stopwatch reset');
-    //Update the display
-    this.display.textContent = this.formatTime(this.duration);
-};
-
-// Create an instance of the Stopwatch
-let stopwatches = [];
-
-// Create the first stopwatch instance and store it in the array
-let stopwatch = new Stopwatch(document.querySelector('.stopwatch:first-child .stopwatch-time'));
-stopwatches.push(stopwatch);
-
-// Add event listeners to the buttons of the first stopwatch
-document.querySelectorAll('.stopwatch button').forEach(button => {
-    button.addEventListener('click', function() {
-        let action = this.dataset.action;
-        stopwatch[action]();
-    });
-});
-
-let buttons = document.querySelectorAll('[data-action]');
-buttons.forEach(button => {
-    button.addEventListener('click', function() {
-        let action = this.dataset.action;
-        stopwatch[action]();
-    });
-});
-document.getElementById('add-stopwatch').addEventListener('click', function() {
-    // Create a new stopwatch div
-    let newStopwatch = document.createElement('div');
-    newStopwatch.className = 'stopwatch';
-
-    // Add the input field for the stopwatch name
-    let nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.className = 'form-control stopwatch-name';
-    nameInput.placeholder = 'Enter stopwatch name';
-    newStopwatch.appendChild(nameInput);
-
-    // Add the div for the stopwatch time
-    let timeDiv = document.createElement('div');
-    timeDiv.className = 'stopwatch-time';
-    timeDiv.textContent = '00:00:00';
-    newStopwatch.appendChild(timeDiv);
-
-    // Add the start, stop, and reset buttons
-    let buttonTypes = ['start', 'pause', 'reset'];
-    let buttonClasses = ['btn-success', 'btn-danger', 'btn-warning'];
-    let buttonIcons = ['fa-play', 'fa-pause', 'fa-redo'];
-    for (let i = 0; i < buttonTypes.length; i++) {
-        let button = document.createElement('button');
-        button.className = 'btn ' + buttonClasses[i];
-        button.dataset.action = buttonTypes[i];
-
-        let icon = document.createElement('i');
-        icon.className = 'fas ' + buttonIcons[i];
-        button.appendChild(icon);
-
-        button.textContent = ' ' + buttonTypes[i].charAt(0).toUpperCase() + buttonTypes[i].slice(1);
-        newStopwatch.appendChild(button);
-    }
-
-    // Append the new stopwatch to the container
-    document.querySelector('.container').appendChild(newStopwatch);
-
-    // Create a new Stopwatch instance
-    let newStopwatchInstance = new Stopwatch(newStopwatch.querySelector('.stopwatch-time'));
-    stopwatches.push(newStopwatchInstance);
-
-    // Add event listeners to the buttons
-    newStopwatch.querySelectorAll('button').forEach(button => {
-        button.addEventListener('click', function() {
-            let action = this.dataset.action;
-            newStopwatchInstance[action]();
-        });
-    });
-});
+customElements.define('my-stopwatch', Stopwatch);

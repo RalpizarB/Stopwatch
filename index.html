@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="stopwatch.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <meta charset="UTF-8">
@@ -10,14 +11,6 @@
             background-color: #343a40; /* dark background for night mode */
             color: #f8f9fa; /* light text for night mode */
         }
-
-        .stopwatch {
-            margin-top: 20px;
-        }
-
-        .stopwatch-name {
-            margin-bottom: 10px;
-        }
     </style>
 </head>
 <body>
@@ -25,10 +18,16 @@
     <div class="row">
         <div class="col-md-12">
             <h1>Stopwatch</h1>
+
         </div>
     </div>
 </div>
+<div>
+    <div style="text-align: left">
+        <my-stopwatch></my-stopwatch>
+    </div>
 
+</div>
 
 <div style="margin: 20px">
     <button class="btn btn-primary" id="add-stopwatch"><i class="fas fa-plus"></i> Add Stopwatch</button>
@@ -36,6 +35,6 @@
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-<script src="stopwatch.js"></script>
+
 </body>
 </html>
