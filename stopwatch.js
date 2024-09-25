@@ -10,21 +10,7 @@ class Stopwatch extends HTMLElement {
         this.attachShadow({mode: 'open'});
         this.loadStyles('https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css');
         this.shadowRoot.innerHTML = `
-            <style>
-                /* ... existing styles ... */
-                #reset {
-                    position: relative;
-                    overflow: hidden;
-                    padding: 0; /* Remove padding */
-                    line-height: 1; /* Adjust line-height */
-                }
-                .progress {
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 100%;
-                }
-            </style>
+
             <div style="padding: 20px; text-align: center">
                 <div class="container" style="margin: 20px auto; max-width: 300px; text-align: center">      
                    <input type="text" class="form-control" placeholder="Name" style="margin-bottom: 20px; border: 2px solid #f8f9fa; background-color: #343a40; color: #f8f9fa; text-align: center;"> 
@@ -36,10 +22,11 @@ class Stopwatch extends HTMLElement {
                     <button id="start-pause" class="btn btn-primary" style="margin-right: 10px;">Start</button>
                     <button id="reset" class="btn btn-secondary">
                         Reset
-                        <div class="progress" style="height: 20px; margin-top: 10px;">
+                        <div class="progress" style="height:2px; margin-top: 2px;">
                             <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                     </button>
+                    <button id="delete" class="btn btn-danger" style="margin-left: 10px;">Delete</button>
                 </div>
             </div>
     `;
@@ -49,6 +36,7 @@ class Stopwatch extends HTMLElement {
         this.resetProgressBar = this.shadowRoot.querySelector('.progress-bar');
         this.shadowRoot.querySelector('#reset').addEventListener('mousedown', () => this.startReset());
         this.shadowRoot.querySelector('#reset').addEventListener('mouseup', () => this.stopReset());
+        this.shadowRoot.querySelector('#delete').addEventListener('click', () => this.deleteStopwatch());
         
     }
 
@@ -105,6 +93,20 @@ class Stopwatch extends HTMLElement {
         style.textContent = text;
         this.shadowRoot.appendChild(style);
     }
+    
+    deleteStopwatch() {
+        //asks the user if they are sure they want to delete the stopwatch
+        if (confirm('Are you sure you want to delete this stopwatch?'))
+            this.remove();
+    }
+}
+document.addEventListener('DOMContentLoaded', (event) => {
+    document.getElementById('add-stopwatch').addEventListener('click', createStopwatch);
+});
+
+function createStopwatch() {
+    const stopwatch = document.createElement('my-stopwatch');
+    document.getElementById('stopwatchContainer').appendChild(stopwatch);
 }
 
 
